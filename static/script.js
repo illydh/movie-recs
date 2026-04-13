@@ -54,7 +54,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        suggestionsList.classList.add('hidden'); // Hide suggestions on submit
         window.submitForm();
+    });
+
+    // Autocomplete Logic
+    const suggestionsList = document.getElementById('suggestions-list');
+    let debounceTimer;
+
+    movieInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (query.length < 2) {
+            suggestionsList.classList.add('hidden');
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error('Search failed');
+                
+                const data = await response.json();
+                
+                if (data.results && data.results.length > 0) {
+                    suggestionsList.innerHTML = data.results.map(title => 
+                        `<li class="suggestion-item">${title}</li>`
+                    ).join('');
+                    suggestionsList.classList.remove('hidden');
+
+                    // Add click listeners to items
+                    const items = suggestionsList.querySelectorAll('.suggestion-item');
+                    items.forEach(item => {
+                        item.addEventListener('click', () => {
+                            movieInput.value = item.textContent;
+                            suggestionsList.classList.add('hidden');
+                            window.submitForm(); // Automatically submit on selection
+                        });
+                    });
+                } else {
+                    suggestionsList.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Autocomplete error:", err);
+                suggestionsList.classList.add('hidden');
+            }
+        }, 300); // 300ms debounce
+    });
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchForm.contains(e.target)) {
+            suggestionsList.classList.add('hidden');
+        }
     });
 
     function renderMovies(movies) {

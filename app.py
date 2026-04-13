@@ -30,6 +30,14 @@ def recommend_movies(req: RecRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/search")
+def search_movies(q: str):
+    try:
+        results = recommender.search_titles(q, limit=10)
+        return {"results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Mount static files
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 

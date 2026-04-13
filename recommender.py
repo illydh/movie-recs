@@ -104,3 +104,14 @@ class MovieRecommender:
         # Fill na
         res.fillna('', inplace=True)
         return res.to_dict('records')
+
+    def search_titles(self, query, limit=10):
+        if not query:
+            return []
+        query_lower = query.lower()
+        
+        # Match against actual title
+        matches = self.df[self.df['title'].str.lower().str.contains(query_lower, na=False, regex=False)]
+        
+        # Take limit first, return list of titles
+        return matches['title'].head(limit).tolist()
